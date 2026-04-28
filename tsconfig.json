@@ -39,6 +39,10 @@
   "exclude": [
     "node_modules",
     "examples",
-    "mini-services"
+    "mini-services",
+    "skills",
+    "download",
+    "upload",
+    "db"
   ]
 }

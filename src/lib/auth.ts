@@ -74,7 +74,7 @@ async function cleanExpiredSessions() {
   }
 }
 
-export async function getSession(token: string): { user: SessionUser; expiresAt: number } | null {
+export async function getSession(token: string): Promise<{ user: SessionUser; expiresAt: number } | null> {
   const session = await db.session.findUnique({
     where: { token },
     include: { user: { select: { id: true, username: true, name: true, role: true } } },
