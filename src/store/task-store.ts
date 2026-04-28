@@ -52,7 +52,6 @@ interface TaskState {
   addTask: (task: Omit<Task, 'id'>) => Promise<Task>;
   updateTask: (id: string, task: Partial<Task>) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
-  seedTasks: () => Promise<void>;
   setCurrentView: (view: TaskView) => void;
   setSortBy: (field: SortField) => void;
   toggleSortOrder: () => void;
@@ -156,22 +155,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  seedTasks: async () => {
-    set({ loading: true });
-    try {
-      const res = await fetch('/api/tasks/seed', {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error('Failed to seed tasks');
-      const data: Task[] = await res.json();
-      set({ tasks: data });
-    } catch (error) {
-      console.error('Failed to seed tasks:', error);
-      throw error;
-    } finally {
-      set({ loading: false });
-    }
-  },
 
   // ── UI actions ─────────────────────────────────────────────────────────
 

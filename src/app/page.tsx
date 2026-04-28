@@ -356,7 +356,6 @@ function AppShell() {
     loading,
     tasks,
     fetchTasks,
-    seedTasks,
     setIsDialogOpen,
     setEditingTask,
   } = useTaskStore();
@@ -529,12 +528,6 @@ function AppShell() {
               {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
             </span>
           </button>
-
-          {tasks.length === 0 && !loading && (
-            <Button variant="outline" size="sm" onClick={seedTasks} className="shrink-0 hidden sm:flex">
-              Load Sample Data
-            </Button>
-          )}
         </header>
 
         {/* Page content */}

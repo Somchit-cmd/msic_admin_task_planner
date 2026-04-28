@@ -83,3 +83,28 @@ Stage Summary:
 - All API routes confirmed working with Neon PostgreSQL
 - Login credentials unchanged - same username/password auth with bcrypt
 - Project is now ready for Cloudflare Pages deployment
+
+---
+
+Task ID: 3
+Agent: Main Agent
+Task: Remove "Load Sample Data" feature, keep admin user seeding
+
+Work Log:
+- Removed "Load Sample Data" button from `src/app/page.tsx` header
+- Removed `seedTasks` action from task store (`src/store/task-store.ts`)
+- Deleted `/api/tasks/seed/route.ts` (sample task data seeding endpoint)
+- Deleted `/api/settings/seed/route.ts` (default settings seeding endpoint)
+- Removed settings auto-seed useEffect from `src/components/views/settings-view.tsx`
+- Cleaned up unused imports and empty directories
+- Verified admin user seeding (`/api/auth/seed-admin`) still works correctly
+- Verified removed seed routes return 404/405
+- Ran lint: 0 errors, 1 pre-existing warning
+
+Stage Summary:
+- "Load Sample Data" button completely removed from UI
+- Task sample data seeding (`/api/tasks/seed`) removed
+- Settings default seeding (`/api/settings/seed`) removed
+- Admin user seeding (`/api/auth/seed-admin`) preserved and working
+- User can now add all data (categories, priorities, statuses, tasks) manually
+- Dev server running cleanly with no errors

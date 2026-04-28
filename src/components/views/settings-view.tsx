@@ -533,7 +533,6 @@ function SettingsTable({
 // ─── Main Settings View ─────────────────────────────────────────────────────
 
 export function SettingsView() {
-  const { user } = useAuthStore();
   const { fetchSettings, initialized, loading } = useSettingsStore();
 
   useEffect(() => {
@@ -541,13 +540,6 @@ export function SettingsView() {
       fetchSettings();
     }
   }, [initialized, fetchSettings]);
-
-  // Seed default settings on first load
-  useEffect(() => {
-    if (user?.role === "admin" && initialized) {
-      fetch("/api/settings/seed", { method: "POST" }).catch(() => {});
-    }
-  }, [user?.role, initialized]);
 
   const categories = useSettingsStore((s) => s.categories);
   const priorities = useSettingsStore((s) => s.priorities);
