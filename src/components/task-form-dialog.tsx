@@ -25,13 +25,13 @@ import {
 
 import { useTaskStore, type Task } from '@/store/task-store';
 import { useSettingsStore } from '@/store/settings-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Loader2 } from 'lucide-react';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getAuthHeaders(): Record<string, string> {
-  // Auth token is now in httpOnly cookie — sent automatically by browser
-  return {};
+  return useAuthStore.getState().getAuthHeaders();
 }
 
 // ─── Form State ────────────────────────────────────────────────────────────────

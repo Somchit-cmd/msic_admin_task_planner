@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/popover";
 import { useTaskStore, type Task, type SortField } from "@/store/task-store";
 import { useSettingsStore } from "@/store/settings-store";
+import { useAuthStore } from "@/store/auth-store";
 import { differenceInDays, format } from "date-fns";
 import { DeleteTaskDialog } from "@/components/delete-task-dialog";
 import { CompleteTaskDialog } from "@/components/complete-task-dialog";
@@ -245,8 +246,7 @@ export function AllTasksView() {
   const [assignableUsers, setAssignableUsers] = useState<{ id: string; username: string; name: string | null }[]>([]);
 
   function getAuthHeaders(): Record<string, string> {
-    // Auth token is now in httpOnly cookie — sent automatically by browser
-    return {};
+    return useAuthStore.getState().getAuthHeaders();
   }
 
   useEffect(() => {

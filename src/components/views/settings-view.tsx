@@ -261,8 +261,7 @@ function SettingsTable({
   // ── Helper ────────────────────────────────────────────────────────────────
 
   function getAuthHeaders(): Record<string, string> {
-    // Auth token is now in httpOnly cookie — sent automatically by browser
-    return {};
+    return useAuthStore.getState().getAuthHeaders();
   }
 
   // ── Create ────────────────────────────────────────────────────────────────

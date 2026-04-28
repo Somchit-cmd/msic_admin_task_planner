@@ -85,10 +85,11 @@ const EMPTY_FORM: UserFormData = { username: '', name: '', password: '', role: '
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-// ── Helper: always get fresh token from storage ─────────────────────────────
+// ── Helper: get auth headers with token from store ─────────────────────────
 function getAuthHeaders(): Record<string, string> {
-  // Auth token is now in httpOnly cookie — sent automatically by browser
-  return {};
+  // Import at top-level won't work here because this is a standalone function,
+  // so we use the store's getState() directly via a dynamic approach
+  return useAuthStore.getState().getAuthHeaders();
 }
 
 export function UsersView() {

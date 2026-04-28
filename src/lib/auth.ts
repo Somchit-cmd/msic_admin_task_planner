@@ -216,6 +216,7 @@ export async function POST_login(req: NextRequest) {
 
     const response = NextResponse.json({
       user: { id: user.id, username: user.username, name: user.name, role: user.role },
+      token,
     });
 
     setAuthCookie(response, token, doRemember, expiresAt);

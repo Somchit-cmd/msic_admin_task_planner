@@ -11,6 +11,7 @@ export interface AuthUser {
 
 interface AuthState {
   user: AuthUser | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
   remainingAttempts: number | null;
@@ -21,14 +22,20 @@ interface AuthState {
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
   clearError: () => void;
+  getAuthHeaders: () => Record<string, string>;
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
-// Token is stored in an httpOnly cookie set by the server.
-// The browser sends it automatically with every request — no localStorage needed.
+// Token is stored both in httpOnly cookie (server-side) and in memory (client-side).
+// The in-memory token is used as Authorization header fallback for cross-origin scenarios
+// where cookies may not be sent (e.g., embedded iframes, proxies).
+
+// Try to restore token from sessionStorage (survives page refresh within same tab)
+const savedToken = typeof window !== 'undefined' ? sessionStorage.getItem('auth_token') : null;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  token: savedToken,
   loading: true,
   error: null,
   remainingAttempts: null,
@@ -56,7 +63,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
-      set({ user: data.user, loading: false, error: null, remainingAttempts: null, locked: false });
+      // Store token in memory and sessionStorage for cross-origin fallback
+      const token = data.token || null;
+      if (token) {
+        sessionStorage.setItem('auth_token', token);
+      }
+
+      set({ user: data.user, token, loading: false, error: null, remainingAttempts: null, locked: false });
     } catch {
       set({ error: 'Network error. Please try again.', loading: false });
     }
@@ -67,11 +80,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: get().getAuthHeaders(),
       });
     } catch {
       // Ignore errors on logout
     }
-    set({ user: null, loading: false, error: null, remainingAttempts: null, locked: false });
+    sessionStorage.removeItem('auth_token');
+    set({ user: null, token: null, loading: false, error: null, remainingAttempts: null, locked: false });
   },
 
   checkSession: async () => {
@@ -82,11 +97,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await fetch('/api/auth/session', {
         credentials: 'include',
         signal: controller.signal,
+        headers: get().getAuthHeaders(),
       });
       clearTimeout(timeoutId);
       const data = await res.json();
 
       if (!res.ok) {
+        // If cookie auth failed but we have a token, try without cookie
+        const { token } = get();
+        if (token) {
+          const retryRes = await fetch('/api/auth/session', {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            set({ user: retryData.user, loading: false });
+            return;
+          }
+        }
         set({ user: null, loading: false });
         return;
       }
@@ -99,4 +128,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null, remainingAttempts: null, locked: false }),
+
+  getAuthHeaders: () => {
+    const { token } = get();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  },
 }));
