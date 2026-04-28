@@ -29,8 +29,6 @@ function getCookieOptions(remember = false, expiresAt?: Date) {
   const isSecure = process.env.NODE_ENV === 'production';
 
   return {
-    name: COOKIE_NAME,
-    value: '', // set by caller
     httpOnly: true,
     secure: isSecure,
     sameSite: 'lax' as const,
@@ -41,7 +39,7 @@ function getCookieOptions(remember = false, expiresAt?: Date) {
 
 function setAuthCookie(response: NextResponse, token: string, remember: boolean, expiresAt: Date) {
   const options = getCookieOptions(remember, expiresAt);
-  response.cookies.set(options.name, token, options);
+  response.cookies.set(COOKIE_NAME, token, options);
 }
 
 function clearAuthCookie(response: NextResponse) {
