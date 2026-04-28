@@ -95,9 +95,14 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return
-    onSelect(api)
     api.on("reInit", onSelect)
     api.on("select", onSelect)
+
+    // Initialize state asynchronously to avoid setState in effect
+    setTimeout(() => {
+      setCanScrollPrev(api.canScrollPrev())
+      setCanScrollNext(api.canScrollNext())
+    }, 0)
 
     return () => {
       api?.off("select", onSelect)

@@ -111,6 +111,8 @@ export function UsersView() {
 
   // ── Fetch users ─────────────────────────────────────────────────────────
 
+  // ── Fetch users ─────────────────────────────────────────────────────────
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -128,9 +130,27 @@ export function UsersView() {
     }
   }, [search]);
 
+  // Fetch users when search changes
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const params = search ? `?search=${encodeURIComponent(search)}` : '';
+        const res = await fetch(`/api/users${params}`, {
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to fetch users');
+        const data = await res.json();
+        setUsers(data);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [search]);
 
   // ── Search debounce ─────────────────────────────────────────────────────
 

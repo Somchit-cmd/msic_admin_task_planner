@@ -185,13 +185,37 @@ export async function POST_register(req: NextRequest) {
 
 export async function POST_login(req: NextRequest) {
   try {
-    const { username, password, rememberMe } = await req.json();
+    const bodyText = await req.text();
+    let parsedBody: { username?: string; password?: string; rememberMe?: boolean } = {};
+
+    try {
+      parsedBody = JSON.parse(bodyText);
+    } catch (error) {
+      console.error('Login request body parse failed:', bodyText);
+      throw error;
+    }
+
+    const { username, password, rememberMe } = parsedBody;
 
     if (!username || !password) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({ where: { username: username.toLowerCase() } });
+    let user = await db.user.findUnique({ where: { username: username.toLowerCase() } });
+
+    // Auto-seed admin user on first login attempt with admin credentials
+    if (!user && username.toLowerCase() === 'admin' && password === 'admin123') {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      user = await db.user.create({
+        data: {
+          username: 'admin',
+          password: hashedPassword,
+          name: 'Administrator',
+          role: 'admin',
+        },
+      });
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
