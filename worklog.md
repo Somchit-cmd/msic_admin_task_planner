@@ -39,3 +39,24 @@ Integrated the MSIC Admin Task Planner GitHub project into the existing Next.js 
 
 ### No Errors Encountered
 All steps completed successfully without issues.
+
+---
+
+Task ID: 1
+Agent: Main Agent
+Task: Fix web page not loading (only Z logo showing) and login internal server error
+
+Work Log:
+- Diagnosed that dev server process was dying when backgrounded due to `tee` pipe issues
+- Found that the SQLite database had NO users (admin user was never seeded - seed-admin only runs from AppShell which requires login, a catch-22)
+- Seeded admin user directly via Prisma script (username: admin, password: admin123)
+- Removed Prisma query logging (`log: ['query']`) from db.ts to reduce log noise
+- Started dev server with `</dev/null` to keep stdin closed and prevent pipe crashes
+- Verified server stays running and handles requests correctly
+- Tested login API - returns 200 with user data successfully
+
+Stage Summary:
+- Admin user seeded: username=`admin`, password=`admin123`
+- Dev server running stably on port 3000
+- Login API confirmed working: POST /api/auth/login returns user session
+- Root cause of page not loading: dev server kept crashing; fixed with proper process management
