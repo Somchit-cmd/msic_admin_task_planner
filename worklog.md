@@ -108,3 +108,68 @@ Stage Summary:
 - Admin user seeding (`/api/auth/seed-admin`) preserved and working
 - User can now add all data (categories, priorities, statuses, tasks) manually
 - Dev server running cleanly with no errors
+
+---
+
+Task ID: 7b
+Agent: Security Agent
+Task: Add security headers and middleware
+
+Work Log:
+- **M1**: Added 6 security headers to `next.config.ts` via `headers()` function:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+  - `X-DNS-Prefetch-Control: on`
+  - Intentionally omitted Content-Security-Policy due to Google Fonts and shadcn chart `dangerouslySetInnerHTML` conflicts
+- **H2**: Created `/home/z/my-project/src/middleware.ts` with centralized auth protection:
+  - Allows public API routes (`/api/auth/login`, `/api/auth/session`) without auth
+  - All other `/api/*` routes require `auth_session` cookie to exist
+  - Returns 401 JSON response if cookie missing
+  - Defense-in-depth layer only; actual session validation still in route handlers via `getUserFromRequest()`
+  - Matcher scoped to `/api/:path*` only
+- **L1**: Removed unused `next-auth` dependency via `bun remove next-auth` (1 package removed)
+- **M4**: Fixed build config weaknesses:
+  - Set `reactStrictMode: true`
+  - Removed `typescript.ignoreBuildErrors: true` (was silencing type errors)
+
+Stage Summary:
+- All API responses now include security headers
+- API routes protected by middleware defense-in-depth layer
+- `reactStrictMode` enabled for stricter React development checks
+- `ignoreBuildErrors` removed so TypeScript errors are caught at build time
+- Unused `next-auth` package removed to reduce bundle size
+
+---
+
+Task ID: 7a
+Agent: Security Agent
+Task: Fix critical auth security issues
+
+Work Log:
+- **C1**: Ran `git rm --cached .env` to untrack the `.env` file from git. The `.gitignore` already has `.env*` so it won't be re-added.
+- **C2**: Fixed `src/app/api/auth/seed-admin/route.ts`:
+  - Added `getUserFromRequest` import from `@/lib/auth`
+  - Added admin-only auth check to POST handler (returns 401 if not admin)
+  - Removed `credentials: { username: 'admin', password: 'admin123' }` from the 201 response body — no more plaintext password leak
+  - Added admin-only auth check to GET handler (signature changed from `GET()` to `GET(req: NextRequest)`)
+- **C3**: Added authentication to all task API endpoints:
+  - `src/app/api/tasks/route.ts`: Added `getUserFromRequest` import; added 401 auth guard to GET and POST handlers
+  - `src/app/api/tasks/[id]/route.ts`: Added `getUserFromRequest` import; added 401 auth guard to PUT and DELETE handlers; renamed `_request` → `request` in DELETE
+- **H1**: Removed token from response body and sessionStorage:
+  - `src/lib/auth.ts`: Removed `token` from `POST_login` JSON response (token still set in httpOnly cookie via `setAuthCookie`); removed `Authorization` header fallback from `getTokenFromRequest` (cookie-only now)
+  - `src/store/auth-store.ts`: Complete rewrite — removed `token: string | null` from AuthState interface; removed `savedToken` / `sessionStorage.getItem('auth_token')` init; removed token extraction and `sessionStorage.setItem` from login; removed `sessionStorage.removeItem('auth_token')` from logout; simplified `checkSession` to cookie-only (removed token-based retry); `getAuthHeaders()` now returns `{}`
+- **H3**: Fixed IP detection for Cloudflare in `src/app/api/auth/login/route.ts`: Changed `getClientIp` to prioritize `cf-connecting-ip` header (trusted, set by Cloudflare, cannot be spoofed), then fall back to `x-forwarded-for`, then `'unknown'`
+- **M2**: Fixed privilege escalation in `src/lib/auth.ts`: Changed `POST_register` role assignment from `role: role === 'admin' ? 'admin' : 'user'` to `role: 'user'` — all new registrations are now regular users regardless of any `role` parameter sent by the client
+- Verified no new TypeScript errors introduced (one pre-existing `getSession` return type error in auth.ts unrelated to these changes)
+
+Stage Summary:
+- `.env` untracked from git (prevents secrets from being committed)
+- Seed-admin endpoint locked down: admin-only + no plaintext credentials in response
+- All task CRUD endpoints now require valid session authentication
+- Token no longer exposed in login response body or client-side storage (httpOnly cookie only)
+- `getAuthHeaders()` returns empty object (still exists as no-op for backward compatibility with callers)
+- IP detection uses Cloudflare's trusted `cf-connecting-ip` header first
+- Registration privilege escalation patched: all new users are always `'user'` role

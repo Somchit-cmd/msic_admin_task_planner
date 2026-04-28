@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
 // GET /api/tasks — fetch all tasks
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const currentUser = await getUserFromRequest(request);
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const tasks = await db.task.findMany({
       orderBy: { dateCreated: "desc" },
     });
@@ -20,6 +24,9 @@ export async function GET() {
 // POST /api/tasks — create a new task
 export async function POST(request: NextRequest) {
   try {
+    const currentUser = await getUserFromRequest(request);
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json();
     const {
       taskName,

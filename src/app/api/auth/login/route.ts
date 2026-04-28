@@ -3,17 +3,13 @@ import { POST_login } from '@/lib/auth';
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/rate-limit';
 
 function getClientIp(req: NextRequest): string {
-  // Check common proxy headers first, fall back to connection remote address
+  // Cloudflare sets this header — trusted, cannot be spoofed
+  const cfIp = req.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+  // Fallback for local dev
   const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) {
-    return realIp.trim();
-  }
-  // Fallback — Next.js doesn't expose socket in edge, use a generic key
-  return req.headers.get('x-client-ip') ?? 'unknown';
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return 'unknown';
 }
 
 export async function POST(req: NextRequest) {

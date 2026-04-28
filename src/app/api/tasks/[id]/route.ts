@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getUserFromRequest } from "@/lib/auth";
 
 // PUT /api/tasks/[id] — update an existing task
 export async function PUT(
@@ -7,6 +8,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = await getUserFromRequest(request);
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id } = await params;
     const body = await request.json();
 
@@ -53,10 +57,13 @@ export async function PUT(
 
 // DELETE /api/tasks/[id] — delete a task
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = await getUserFromRequest(request);
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id } = await params;
 
     const task = await db.task.findUnique({ where: { id } });

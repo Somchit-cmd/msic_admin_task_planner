@@ -59,10 +59,6 @@ function getTokenFromRequest(req: NextRequest): string | null {
   const cookieToken = req.cookies.get(COOKIE_NAME)?.value;
   if (cookieToken) return cookieToken;
 
-  // Fallback: Authorization header (for backward compatibility during transition)
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '');
-  if (authHeader) return authHeader;
-
   return null;
 }
 
@@ -174,7 +170,7 @@ export async function POST_register(req: NextRequest) {
         username: normalizedUsername,
         password: hashedPassword,
         name: name || null,
-        role: role === 'admin' ? 'admin' : 'user',
+        role: 'user',
       },
     });
 
@@ -216,7 +212,6 @@ export async function POST_login(req: NextRequest) {
 
     const response = NextResponse.json({
       user: { id: user.id, username: user.username, name: user.name, role: user.role },
-      token,
     });
 
     setAuthCookie(response, token, doRemember, expiresAt);

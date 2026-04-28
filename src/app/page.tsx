@@ -381,7 +381,7 @@ function AppShell() {
   // Seed admin on first load if no admin exists
   useEffect(() => {
     if (user?.role === 'admin') {
-      fetch('/api/auth/seed-admin', { method: 'POST' }).catch(() => {});
+      fetch('/api/auth/seed-admin', { method: 'POST', credentials: 'include' }).catch(() => {});
     }
   }, [user?.role]);
 
