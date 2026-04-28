@@ -49,7 +49,7 @@ interface TaskState {
 
   // Actions
   fetchTasks: () => Promise<void>;
-  addTask: (task: Omit<Task, 'id'>) => Promise<Task>;
+  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => Promise<Task>;
   updateTask: (id: string, task: Partial<Task>) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
   setCurrentView: (view: TaskView) => void;
