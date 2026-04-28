@@ -22,16 +22,16 @@ model User {
 }
 
 model Task {
-  id          String   @id @default(cuid())
-  taskName    String
-  category    String
-  priority    String   @default("Medium")
-  startDate   String
-  deadline    String
-  assignedTo  String   @default("")
-  note        String   @default("")
-  status      String   @default("Pending")
-  dateCreated String   @default("")
+  id         String   @id @default(cuid())
+  taskName   String
+  category   String
+  priority   String   @default("Medium")
+  startDate  String
+  deadline   String
+  assignedTo String   @default("")
+  note       String   @default("")
+  status     String   @default("Pending")
+  createdAt  DateTime @default(now())
 }
 
 model Session {

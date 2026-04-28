@@ -12,11 +12,11 @@ export interface Task {
   assignedTo: string;
   note: string;
   status: string;
-  dateCreated: string;
+  createdAt: string;
 }
 
 export type TaskView = 'dashboard' | 'today' | 'all' | 'deadlines' | 'users' | 'settings';
-export type SortField = 'priority' | 'deadline' | 'dateCreated' | null;
+export type SortField = 'priority' | 'deadline' | 'createdAt' | null;
 export type SortOrder = 'asc' | 'desc';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   fetchTasks: async () => {
     set({ loading: true });
     try {
-      const res = await fetch('/api/tasks');
+      const res = await fetch('/api/tasks', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch tasks');
       const data: Task[] = await res.json();
       set({ tasks: data });
@@ -93,12 +93,13 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  addTask: async (task: Omit<Task, 'id'>) => {
+  addTask: async (task: Omit<Task, 'id' | 'createdAt'>) => {
     set({ loading: true });
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(task),
       });
       if (!res.ok) throw new Error('Failed to add task');
@@ -119,6 +120,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const res = await fetch(`/api/tasks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(task),
       });
       if (!res.ok) throw new Error('Failed to update task');
@@ -141,6 +143,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete task');
       set((state) => ({
@@ -211,10 +214,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           cmp =
             new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
           break;
-        case 'dateCreated':
+        case 'createdAt':
           cmp =
-            new Date(a.dateCreated).getTime() -
-            new Date(b.dateCreated).getTime();
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime();
           break;
       }
 

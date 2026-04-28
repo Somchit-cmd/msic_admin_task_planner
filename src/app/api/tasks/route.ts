@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const tasks = await db.task.findMany({
-      orderBy: { dateCreated: "desc" },
+      orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(tasks);
   } catch (error) {
@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
         assignedTo,
         note,
         status,
-        dateCreated: new Date().toISOString().split("T")[0],
       },
     });
 

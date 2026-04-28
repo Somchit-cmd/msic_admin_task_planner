@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Filter,
   X,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,46 @@ function getStatusBadgeClass(status: string, color: string): string {
     case "Completed": return "border-transparent bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
     default: return "border-transparent";
   }
+}
+
+function escapeCsvValue(value: string | number | boolean | null | undefined) {
+  if (value === null || value === undefined) return "";
+  const text = String(value);
+  if (/[",\n\r]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
+function buildTasksCsv(tasks: Task[]) {
+  const headers = ["Task Name", "Start Date", "Created At", "Category", "Priority", "Status", "Assigned To", "Deadline", "Remaining", "Note"];
+  const rows = tasks.map((task) => {
+    const remaining = getRemainingInfo(task).label;
+    return [
+      escapeCsvValue(task.taskName),
+      escapeCsvValue(task.startDate),
+      escapeCsvValue(format(new Date(task.createdAt), "yyyy-MM-dd")),
+      escapeCsvValue(task.category),
+      escapeCsvValue(task.priority),
+      escapeCsvValue(task.status),
+      escapeCsvValue(task.assignedTo || ""),
+      escapeCsvValue(format(new Date(task.deadline), "yyyy-MM-dd")),
+      escapeCsvValue(remaining),
+      escapeCsvValue(task.note || ""),
+    ].join(",");
+  });
+
+  return [headers.map(escapeCsvValue).join(","), ...rows].join("\r\n");
+}
+
+function downloadCsv(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -337,6 +378,14 @@ export function AllTasksView() {
   const startItem = filteredTasks.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, filteredTasks.length);
 
+  const handleExport = () => {
+    const sortedForExport = [...filteredTasks].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const csv = buildTasksCsv(sortedForExport);
+    downloadCsv(`tasks-export-${format(new Date(), "yyyyMMdd-HHmmss")}.csv`, csv);
+  };
+
   return (
     <div className="space-y-4">
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -481,6 +530,16 @@ export function AllTasksView() {
           </Popover>
         </div>
 
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          className="shrink-0 h-10 px-3"
+          aria-label="Export tasks"
+          disabled={filteredTasks.length === 0}
+        >
+          <Download className="h-4 w-4 mr-1.5" />
+          <span className="hidden sm:inline text-sm">Export</span>
+        </Button>
         <Button
           variant="outline"
           onClick={handleSortCycle}

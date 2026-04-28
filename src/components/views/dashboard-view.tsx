@@ -22,6 +22,9 @@ import {
   Cell,
   XAxis,
   YAxis,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 import {
   CheckCircle2,
@@ -160,6 +163,36 @@ export function DashboardView() {
     [statuses]
   );
 
+  const assigneeData = useMemo(() => {
+    const counts = tasks.reduce<Record<string, number>>((acc, task) => {
+      const name = task.assignedTo?.trim() || "Unassigned";
+      acc[name] = (acc[name] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .map(([name, count], index) => ({
+        name,
+        count,
+        fill: FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  }, [tasks]);
+
+  const dateData = useMemo(() => {
+    const counts = tasks.reduce<Record<string, number>>((acc, task) => {
+      const date = task.startDate || "Unscheduled";
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-12);
+  }, [tasks]);
+
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* ── Summary Cards ──────────────────────────────────────────────── */}
@@ -254,6 +287,57 @@ export function DashboardView() {
                   ))}
                 </Pie>
               </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Bar Chart — Assigned To */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              Tasks by User
+            </CardTitle>
+            <CardDescription className="hidden sm:block">
+              How many tasks each user currently owns
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0 sm:pt-0">
+            <ChartContainer className="h-[200px] w-full sm:h-[280px]" config={{}}>
+              <BarChart data={assigneeData} accessibilityLayer>
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {assigneeData.map((entry, index) => (
+                    <Cell key={`assignee-cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Line Chart — Tasks by Date */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+              Tasks by Start Date
+            </CardTitle>
+            <CardDescription className="hidden sm:block">
+              Task volume across the most recent start dates
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0 sm:pt-0">
+            <ChartContainer className="h-[200px] w-full sm:h-[280px]" config={{}}>
+              <LineChart data={dateData} accessibilityLayer>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              </LineChart>
             </ChartContainer>
           </CardContent>
         </Card>

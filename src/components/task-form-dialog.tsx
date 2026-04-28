@@ -177,7 +177,6 @@ function TaskFormContent({ editingTask, onClose }: TaskFormContentProps) {
             assignedTo: form.assignedTo.trim(),
             note: form.note.trim(),
             status: form.status,
-            dateCreated: format(new Date(), 'yyyy-MM-dd'),
           });
         }
         onClose();
