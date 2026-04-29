@@ -8,10 +8,8 @@ export async function GET(request: NextRequest) {
     const currentUser = await getUserFromRequest(request);
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // const tasks = await db.task.findMany({
-    //   orderBy: { createdAt: "desc" },
-    // });
-    // return NextResponse.json(tasks);
+    const tasks = await db.task.findMany();
+    return NextResponse.json(tasks);
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
